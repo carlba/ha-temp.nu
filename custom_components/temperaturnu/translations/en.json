@@ -5,11 +5,11 @@
       "user": {
         "title": "Configure Temperatur.nu integration",
         "data": {
-          "station_search": "Station search"
+          "station_search": "Station Search"
         }
       },
       "station_select": {
-        "title": "Select a station",
+        "title": "Select a Station",
         "data": {
           "station_id": "Station"
         }
