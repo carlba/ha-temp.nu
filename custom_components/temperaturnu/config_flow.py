@@ -10,13 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import (
-    CONF_LONG_TERM_SPAN,
-    CONF_STATION_ID,
-    CONF_STATION_SEARCH,
-    DOMAIN,
-    LONG_TERM_SPAN_OPTIONS,
-)
+from .const import CONF_STATION_ID, CONF_STATION_SEARCH, DOMAIN
 from .coordinator import TemperaturNuApi
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,7 +25,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self._station_options: dict[str, str] = {}
-        self._long_term_span = "1week"
 
     async def async_step_user(self, user_input: dict[str, str] | None = None):
         errors = {}
@@ -42,13 +35,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data_schema=vol.Schema(
                     {
                         vol.Required(CONF_STATION_SEARCH): str,
-                        vol.Optional(CONF_LONG_TERM_SPAN, default="1week"): vol.In(LONG_TERM_SPAN_OPTIONS),
                     }
                 ),
             )
 
         station_search = user_input[CONF_STATION_SEARCH].strip()
-        self._long_term_span = user_input[CONF_LONG_TERM_SPAN]
 
         if not station_search:
             errors[CONF_STATION_SEARCH] = "required"
@@ -133,6 +124,5 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             title=f"Temperatur.nu {station_id}",
             data={
                 CONF_STATION_ID: station_id,
-                CONF_LONG_TERM_SPAN: self._long_term_span,
             },
         )
