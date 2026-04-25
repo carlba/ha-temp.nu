@@ -4,7 +4,7 @@ import logging
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.const import UnitOfTemperature
-from homeassistant.helpers.entity import CoordinatorEntity
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import ATTRIBUTION, DOMAIN
 from .coordinator import TemperatureNuDataUpdateCoordinator
