@@ -1,16 +1,22 @@
 from __future__ import annotations
 
-import logging
-
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import ATTRIBUTION, DOMAIN
 from .coordinator import TemperatureNuDataUpdateCoordinator
 
-_LOGGER = logging.getLogger(__name__)
-
+_SENSOR_ICONS: dict[str, str] = {
+    "temperature": "mdi:thermometer",
+    "daily_average": "mdi:thermometer-lines",
+    "daily_min": "mdi:thermometer-lines",
+    "daily_max": "mdi:thermometer-lines",
+}
 
 SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
@@ -52,10 +58,13 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
 )
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
-    coordinator: TemperatureNuDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    entities = [TemperaturNuSensor(coordinator, description) for description in SENSOR_TYPES]
-    async_add_entities(entities)
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    coordinator: TemperatureNuDataUpdateCoordinator = entry.runtime_data
+    async_add_entities(TemperaturNuSensor(coordinator, description) for description in SENSOR_TYPES)
 
 
 class TemperaturNuSensor(CoordinatorEntity, SensorEntity):
@@ -64,16 +73,18 @@ class TemperaturNuSensor(CoordinatorEntity, SensorEntity):
         self.entity_description = description
         station_title = coordinator.data.get("station", {}).get("title", "Temperatur.nu")
         self._attr_name = f"{station_title} {description.name}"
-        self._attr_unique_id = f"temperaturnu_{coordinator.station_id}_{description.key}"
+        self._attr_unique_id = f"{DOMAIN}_{coordinator.station_id}_{description.key}"
         self._attr_attribution = ATTRIBUTION
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, coordinator.station_id)},
+            name=station_title,
+            manufacturer="temperatur.nu",
+            entry_type=DeviceEntryType.SERVICE,
+        )
 
     @property
     def icon(self) -> str | None:
-        if self.entity_description.key == "temperature":
-            return "mdi:thermometer"
-        if self.entity_description.key in {"daily_average", "daily_min", "daily_max"}:
-            return "mdi:thermometer-lines"
-        return None
+        return _SENSOR_ICONS.get(self.entity_description.key)
 
     @property
     def native_value(self):

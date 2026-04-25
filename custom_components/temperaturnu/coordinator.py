@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import logging
 
-from aiohttp import ClientError
-from homeassistant.config_entries import ConfigEntry
+from aiohttp import ClientError, ClientTimeout
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import API_BASE_URL, ATTRIBUTION, CONF_LONG_TERM_SPAN, CONF_STATION_ID, DEFAULT_CLI, DOMAIN, SCAN_INTERVAL
+from .const import API_BASE_URL, CONF_LONG_TERM_SPAN, CONF_STATION_ID, DEFAULT_CLI, SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
+
+_REQUEST_TIMEOUT = ClientTimeout(total=30)
 
 
 class TemperaturNuApi:
@@ -18,9 +18,12 @@ class TemperaturNuApi:
         self._session = session
 
     async def async_get_json(self, params: dict[str, str]) -> dict:
-        params["cli"] = DEFAULT_CLI
         try:
-            async with self._session.get(API_BASE_URL, params=params, timeout=30) as response:
+            async with self._session.get(
+                API_BASE_URL,
+                params={**params, "cli": DEFAULT_CLI},
+                timeout=_REQUEST_TIMEOUT,
+            ) as response:
                 if response.status != 200:
                     raise UpdateFailed("Unexpected status code %s from temperatur.nu API" % response.status)
                 return await response.json()

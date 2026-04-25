@@ -4,9 +4,6 @@ import logging
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME
-from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -14,6 +11,9 @@ from .const import CONF_STATION_ID, CONF_STATION_SEARCH, DOMAIN
 from .coordinator import TemperaturNuApi
 
 _LOGGER = logging.getLogger(__name__)
+
+_USER_STEP_SCHEMA = vol.Schema({vol.Required(CONF_STATION_SEARCH): str})
+_STATION_SELECT_SCHEMA_FACTORY = lambda options: vol.Schema({vol.Required(CONF_STATION_ID): vol.In(options)})
 
 
 class StationNotFoundError(HomeAssistantError):
@@ -30,28 +30,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is None:
-            return self.async_show_form(
-                step_id="user",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required(CONF_STATION_SEARCH): str,
-                    }
-                ),
-            )
+            return self.async_show_form(step_id="user", data_schema=_USER_STEP_SCHEMA)
 
         station_search = user_input[CONF_STATION_SEARCH].strip()
 
         if not station_search:
             errors[CONF_STATION_SEARCH] = "required"
-            return self.async_show_form(
-                step_id="user",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required(CONF_STATION_SEARCH): str,
-                    }
-                ),
-                errors=errors,
-            )
+            return self.async_show_form(step_id="user", data_schema=_USER_STEP_SCHEMA, errors=errors)
 
         try:
             session = async_get_clientsession(self.hass)
@@ -70,15 +55,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Error searching for Temperatur.nu stations")
             errors["base"] = "cannot_connect"
 
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_STATION_SEARCH): str,
-                }
-            ),
-            errors=errors,
-        )
+        return self.async_show_form(step_id="user", data_schema=_USER_STEP_SCHEMA, errors=errors)
 
     async def async_step_station_select(
         self, user_input: dict[str, str] | None = None
@@ -86,9 +63,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_form(
                 step_id="station_select",
-                data_schema=vol.Schema(
-                    {vol.Required(CONF_STATION_ID): vol.In(self._station_options)}
-                ),
+                data_schema=_STATION_SELECT_SCHEMA_FACTORY(self._station_options),
             )
 
         station_id = user_input[CONF_STATION_ID]
@@ -103,18 +78,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except StationNotFoundError:
             return self.async_show_form(
                 step_id="station_select",
-                data_schema=vol.Schema(
-                    {vol.Required(CONF_STATION_ID): vol.In(self._station_options)}
-                ),
+                data_schema=_STATION_SELECT_SCHEMA_FACTORY(self._station_options),
                 errors={CONF_STATION_ID: "station_not_found"},
             )
         except HomeAssistantError:
             _LOGGER.exception("Error validating selected station")
             return self.async_show_form(
                 step_id="station_select",
-                data_schema=vol.Schema(
-                    {vol.Required(CONF_STATION_ID): vol.In(self._station_options)}
-                ),
+                data_schema=_STATION_SELECT_SCHEMA_FACTORY(self._station_options),
                 errors={"base": "cannot_connect"},
             )
 
