@@ -68,6 +68,14 @@ class TemperaturNuSensor(CoordinatorEntity, SensorEntity):
         self._attr_attribution = ATTRIBUTION
 
     @property
+    def icon(self) -> str | None:
+        if self.entity_description.key == "temperature":
+            return "mdi:thermometer"
+        if self.entity_description.key in {"daily_average", "daily_min", "daily_max"}:
+            return "mdi:thermometer-lines"
+        return None
+
+    @property
     def native_value(self):
         station = self.coordinator.data.get("station", {})
         daily = self.coordinator.data.get("daily", [])

@@ -40,12 +40,20 @@ class TemperaturNuWeather(WeatherEntity):
             return None
 
     @property
+    def icon(self) -> str:
+        return "mdi:weather-partly-cloudy"
+
+    @property
     def temperature_unit(self) -> str:
         return UnitOfTemperature.CELSIUS
 
     @property
     def condition(self) -> str:
         return "unknown"
+
+    @property
+    def entity_picture(self) -> str:
+        return "https://www.temperatur.nu/icon.png"
 
     @property
     def attribution(self) -> str:
@@ -64,6 +72,7 @@ class TemperaturNuWeather(WeatherEntity):
             "source_info": station.get("sourceInfo"),
             "sensor_type": station.get("sensorType"),
             "station_url": station.get("url"),
+            "logo_url": "https://www.temperatur.nu/icon.png",
         }
 
     @property
