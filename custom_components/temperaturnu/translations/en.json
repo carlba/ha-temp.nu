@@ -3,10 +3,16 @@
   "config": {
     "step": {
       "user": {
-        "title": "Configure Temperatur.nu integration"
+        "title": "Configure Temperatur.nu integration",
+        "data": {
+          "station_search": "Station search"
+        }
       },
       "station_select": {
-        "title": "Select a station"
+        "title": "Select a station",
+        "data": {
+          "station_id": "Station"
+        }
       }
     }
   }
