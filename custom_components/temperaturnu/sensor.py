@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components.sensor import SensorEntity, SensorEntityDescription, SensorStateClass
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.const import UnitOfTemperature
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -17,24 +17,28 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         key="temperature",
         name="Current temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="daily_average",
         name="Daily average temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="daily_min",
         name="Daily minimum temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="daily_max",
         name="Daily maximum temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
