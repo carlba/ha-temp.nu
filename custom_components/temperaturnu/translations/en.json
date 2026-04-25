@@ -1,0 +1,13 @@
+{
+  "title": "Temperatur.nu",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Temperatur.nu integration"
+      },
+      "station_select": {
+        "title": "Select a station"
+      }
+    }
+  }
+}

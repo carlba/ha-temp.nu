@@ -1,0 +1,13 @@
+{
+  "domain": "temperaturnu",
+  "name": "Temperatur.nu",
+  "version": "1.0.0",
+  "documentation": "https://github.com/carlba/ha-temp.nu",
+  "issue_tracker": "https://github.com/carlba/ha-temp.nu/issues",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@carlba"],
+  "config_flow": true,
+  "iot_class": "cloud_polling",
+  "homeassistant": "2024.12.0"
+}

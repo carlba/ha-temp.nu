@@ -1,0 +1,138 @@
+from __future__ import annotations
+
+import logging
+
+import voluptuous as vol
+from homeassistant import config_entries
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_NAME
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+from .const import (
+    CONF_LONG_TERM_SPAN,
+    CONF_STATION_ID,
+    CONF_STATION_SEARCH,
+    DOMAIN,
+    LONG_TERM_SPAN_OPTIONS,
+)
+from .coordinator import TemperaturNuApi
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class StationNotFoundError(HomeAssistantError):
+    pass
+
+
+class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    VERSION = 1
+
+    def __init__(self) -> None:
+        self._station_options: dict[str, str] = {}
+        self._long_term_span = "1week"
+
+    async def async_step_user(self, user_input: dict[str, str] | None = None):
+        errors = {}
+
+        if user_input is None:
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(CONF_STATION_SEARCH): str,
+                        vol.Optional(CONF_LONG_TERM_SPAN, default="1week"): vol.In(LONG_TERM_SPAN_OPTIONS),
+                    }
+                ),
+            )
+
+        station_search = user_input[CONF_STATION_SEARCH].strip()
+        self._long_term_span = user_input[CONF_LONG_TERM_SPAN]
+
+        if not station_search:
+            errors[CONF_STATION_SEARCH] = "required"
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(CONF_STATION_SEARCH): str,
+                        vol.Optional(CONF_LONG_TERM_SPAN, default=self._long_term_span): vol.In(LONG_TERM_SPAN_OPTIONS),
+                    }
+                ),
+                errors=errors,
+            )
+
+        try:
+            session = async_get_clientsession(self.hass)
+            api = TemperaturNuApi(session)
+            result = await api.async_search_stations(station_search)
+            stations = result.get("stations") or []
+            if not stations:
+                raise StationNotFoundError
+
+            self._station_options = {station["id"]: station.get("title", station["id"]) for station in stations}
+
+            return await self.async_step_station_select()
+        except StationNotFoundError:
+            errors[CONF_STATION_SEARCH] = "station_not_found"
+        except HomeAssistantError:
+            _LOGGER.exception("Error searching for Temperatur.nu stations")
+            errors["base"] = "cannot_connect"
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_STATION_SEARCH): str,
+                    vol.Optional(CONF_LONG_TERM_SPAN, default=self._long_term_span): vol.In(LONG_TERM_SPAN_OPTIONS),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_station_select(
+        self, user_input: dict[str, str] | None = None
+    ):
+        if user_input is None:
+            return self.async_show_form(
+                step_id="station_select",
+                data_schema=vol.Schema(
+                    {vol.Required(CONF_STATION_ID): vol.In(self._station_options)}
+                ),
+            )
+
+        station_id = user_input[CONF_STATION_ID]
+        session = async_get_clientsession(self.hass)
+        api = TemperaturNuApi(session)
+
+        try:
+            result = await api.async_get_station(station_id)
+            stations = result.get("stations") or []
+            if not stations:
+                raise StationNotFoundError
+        except StationNotFoundError:
+            return self.async_show_form(
+                step_id="station_select",
+                data_schema=vol.Schema(
+                    {vol.Required(CONF_STATION_ID): vol.In(self._station_options)}
+                ),
+                errors={CONF_STATION_ID: "station_not_found"},
+            )
+        except HomeAssistantError:
+            _LOGGER.exception("Error validating selected station")
+            return self.async_show_form(
+                step_id="station_select",
+                data_schema=vol.Schema(
+                    {vol.Required(CONF_STATION_ID): vol.In(self._station_options)}
+                ),
+                errors={"base": "cannot_connect"},
+            )
+
+        return self.async_create_entry(
+            title=f"Temperatur.nu {station_id}",
+            data={
+                CONF_STATION_ID: station_id,
+                CONF_LONG_TERM_SPAN: self._long_term_span,
+            },
+        )
