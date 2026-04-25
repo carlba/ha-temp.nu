@@ -4,8 +4,7 @@ from datetime import datetime
 import logging
 
 from homeassistant.components.weather import WeatherEntity
-from homeassistant.const import TEMP_CELSIUS
-from homeassistant.helpers import entity_platform
+from homeassistant.const import UnitOfTemperature
 from homeassistant.util import dt as dt_util
 
 from .const import ATTRIBUTION, DOMAIN
@@ -42,7 +41,7 @@ class TemperaturNuWeather(WeatherEntity):
 
     @property
     def temperature_unit(self) -> str:
-        return TEMP_CELSIUS
+        return UnitOfTemperature.CELSIUS
 
     @property
     def condition(self) -> str:
