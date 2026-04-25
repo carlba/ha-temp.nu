@@ -8,7 +8,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .coordinator import TemperatureNuDataUpdateCoordinator
 from .const import DOMAIN, SCAN_INTERVAL, DEFAULT_CLI
 
-PLATFORMS = [Platform.SENSOR, Platform.WEATHER]
+PLATFORMS = [Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
