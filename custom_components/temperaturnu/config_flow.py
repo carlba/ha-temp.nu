@@ -48,7 +48,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data_schema=vol.Schema(
                     {
                         vol.Required(CONF_STATION_SEARCH): str,
-                        vol.Optional(CONF_LONG_TERM_SPAN, default=self._long_term_span): vol.In(LONG_TERM_SPAN_OPTIONS),
                     }
                 ),
                 errors=errors,
@@ -76,7 +75,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_STATION_SEARCH): str,
-                    vol.Optional(CONF_LONG_TERM_SPAN, default=self._long_term_span): vol.In(LONG_TERM_SPAN_OPTIONS),
                 }
             ),
             errors=errors,
