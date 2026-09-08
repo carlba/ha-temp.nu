@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
@@ -58,6 +60,14 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
 )
 
 
+def _parse_finite_float(value: object) -> float | None:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if math.isfinite(parsed) else None
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -93,22 +103,18 @@ class TemperaturNuSensor(CoordinatorEntity, SensorEntity):
         key = self.entity_description.key
 
         if key == "temperature":
-            temp = station.get("temp")
-            try:
-                return float(temp)
-            except (TypeError, ValueError):
-                return None
+            return _parse_finite_float(station.get("temp"))
 
         if key == "daily_average":
-            values = [float(day.get("average")) for day in daily if day.get("average") not in (None, "")]
+            values = [v for day in daily if (v := _parse_finite_float(day.get("average"))) is not None]
             return sum(values) / len(values) if values else None
 
         if key == "daily_min":
-            values = [float(day.get("min")) for day in daily if day.get("min") not in (None, "")]
+            values = [v for day in daily if (v := _parse_finite_float(day.get("min"))) is not None]
             return min(values) if values else None
 
         if key == "daily_max":
-            values = [float(day.get("max")) for day in daily if day.get("max") not in (None, "")]
+            values = [v for day in daily if (v := _parse_finite_float(day.get("max"))) is not None]
             return max(values) if values else None
 
         if key == "last_update":
